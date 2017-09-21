@@ -25,7 +25,7 @@ add_library(utoxNATIVE STATIC
     os_video.c
     screen_grab.c
     utf8.c
-    video.c
+    # video.c
     window.c
 
     ## The following two have ifdef's for __WIN_LEGACY

@@ -113,25 +113,10 @@ LRESULT CALLBACK WindowProc(HWND window, UINT msg, WPARAM wParam, LPARAM lParam)
 
     if (main_window.window && window != main_window.window) {
         if (msg == WM_DESTROY) {
-            if (window == preview_hwnd) {
-                if (settings.video_preview) {
-                    settings.video_preview = false;
-                    postmessage_utoxav(UTOXAV_STOP_VIDEO, UINT16_MAX, 0, NULL);
-                }
-
-                return false;
-            }
-
-            for (uint8_t i = 0; i < self.friend_list_count; i++) {
-                if (video_hwnd[i] == window) {
-                    FRIEND *f = get_friend(i);
-                    postmessage_utoxav(UTOXAV_STOP_VIDEO, f->number, 0, NULL);
-                    break;
-                }
-            }
+            video_window_closed(window);
         }
 
-        LOG_TRACE("WinEvent", "Uncaught event %u & %u", wParam, lParam);
+        LOG_DEBUG("WinEvent", "Uncaught event %u & %u", wParam, lParam);
         return DefWindowProcW(window, msg, wParam, lParam);
     }
 

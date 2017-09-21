@@ -51,9 +51,6 @@ HICON   black_icon, unread_messages_icon;
 
 HBRUSH  hdc_brush;
 
-HWND    video_hwnd[128]; // todo fixme
-HWND    preview_hwnd;    // todo fixme
-
 extern bool flashing;
 extern bool hidden;
 
@@ -96,5 +93,9 @@ void dnd_init(HWND window);
 
 // Converts a Windows wide null-terminated string to utf8.
 int native_to_utf8str(const wchar_t *str_in, char *str_out, uint32_t max_size);
+
+
+void video_window_closed(HWND window);
+
 
 #endif

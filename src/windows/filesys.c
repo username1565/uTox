@@ -52,7 +52,7 @@ FILE *native_get_file_simple(const char *path, UTOX_FILE_OPTS opts) {
     FILE *f = get_file(wide_path, opts);
 
     if (!f) {
-        LOG_ERR("WinFilesys", "Could not open file: %s", path);
+        LOG_NOTE("WinFilesys", "Could not open file: %s", path);
         return NULL;
     }
 

@@ -4,7 +4,10 @@
 
 #include "../debug.h"
 #include "../macros.h"
+#include "../settings.h"
+#include "../friend.h"
 
+#include "../av/utox_av.h"
 #include "../av/video.h"
 
 #include "../native/time.h"
@@ -44,10 +47,83 @@ static void *  dibits;
 
 static uint16_t video_x, video_y;
 
+static HWND video_hwnd[128] = { 0 }; // FIXME this means windows only supports video calls from <= 128 friends
+static HWND *preview_hwnd = NULL;
+
+void video_window_closed(HWND window) {
+    if (window == *preview_hwnd) {
+        settings.video_preview = false;
+        postmessage_utoxav(UTOXAV_STOP_VIDEO, ~0, 0, NULL);
+        return;
+    }
+
+    for (uint8_t i = 0; i < 128; i++) { // size of video_hwnd, wrong, but this is a short term hack :D
+        if (video_hwnd[i] == window) {
+            FRIEND *f = get_friend(i);
+            postmessage_utoxav(UTOXAV_STOP_VIDEO, f->number, 0, NULL);
+            return;
+        }
+    }
+}
+
+void video_frame(uint16_t id, uint8_t *img_data, uint16_t width, uint16_t height, bool resize) {
+    HWND *hwin;
+    if (id >= UINT16_MAX) {
+        hwin = preview_hwnd;
+    } else {
+        hwin = &video_hwnd[id];
+    }
+
+    if (!hwin || !*hwin) {
+        LOG_ERR("Windows Video", "frame for null window [%u]", id);
+        return;
+    }
+
+    if (resize) {
+        RECT r = {.left = 0, .top = 0, .right = width, .bottom = height };
+        AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, 0);
+
+        int w, h;
+        w = r.right - r.left;
+        h = r.bottom - r.top;
+        if (w > GetSystemMetrics(SM_CXSCREEN)) {
+            w = GetSystemMetrics(SM_CXSCREEN);
+        }
+
+        if (h > GetSystemMetrics(SM_CYSCREEN)) {
+            h = GetSystemMetrics(SM_CYSCREEN);
+        }
+
+        SetWindowPos(*hwin, 0, 0, 0, w, h, SWP_NOZORDER | SWP_NOMOVE);
+    }
+
+    BITMAPINFO bmi = {.bmiHeader = {
+                          .biSize        = sizeof(BITMAPINFOHEADER),
+                          .biWidth       = width,
+                          .biHeight      = -height,
+                          .biPlanes      = 1,
+                          .biBitCount    = 32,
+                          .biCompression = BI_RGB,
+                      } };
+
+
+    RECT r = { 0, 0, 0, 0 };
+    GetClientRect(*hwin, &r);
+
+    HDC dc = GetDC(*hwin);
+
+    if (width == r.right && height == r.bottom) {
+        SetDIBitsToDevice(dc, 0, 0, width, height, 0, 0, 0, height, img_data, &bmi, DIB_RGB_COLORS);
+    } else {
+        StretchDIBits(dc, 0, 0, r.right, r.bottom, 0, 0, width, height, img_data, &bmi, DIB_RGB_COLORS, SRCCOPY);
+    }
+}
+
+
 void video_begin(uint16_t id, char *UNUSED(name), uint16_t UNUSED(name_length), uint16_t width, uint16_t height) {
     HWND *h;
     if (id >= UINT16_MAX) {
-        h = &preview_hwnd;
+        h = preview_hwnd;
     } else {
         h = &video_hwnd[id];
     }
@@ -85,7 +161,7 @@ void video_begin(uint16_t id, char *UNUSED(name), uint16_t UNUSED(name_length), 
 
 void video_end(uint16_t id) {
     if (id >= UINT16_MAX) {
-        DestroyWindow(preview_hwnd);
+        DestroyWindow(*preview_hwnd);
         preview_hwnd = NULL;
     } else {
         if (video_hwnd[id]) {
@@ -120,7 +196,7 @@ HRESULT STDMETHODCALLTYPE test_SampleCB(ISampleGrabberCB *UNUSED(lpMyObj), doubl
         newframe = 1;
     }
 
-    // LOG_TRACE("Video", "frame %u" , length);
+    LOG_TRACE("Video", "frame %u" , length);
     return S_OK;
 }
 
