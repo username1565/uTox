@@ -57,9 +57,12 @@ static void draw_group(int x, int UNUSED(y), int UNUSED(w), int UNUSED(height)) 
 
         if (peer && peer->name_length) {
             char buf[TOX_MAX_NAME_LENGTH];
-            int  text_length = snprintf((char *)buf, TOX_MAX_NAME_LENGTH, "%.*s, ", (int)peer->name_length, peer->name);
 
-            unsigned w = textwidth(buf, text_length);
+            snprintf((char *)buf, sizeof(buf), "%.*s, ",
+                     (int)peer->name_length, peer->name);
+            int buf_len = strnlen(buf, sizeof(buf) - 1);
+
+            unsigned w = textwidth(buf, buf_len);
             if (peer->name_color) {
                 setcolor(peer->name_color);
             } else {
@@ -76,7 +79,7 @@ static void draw_group(int x, int UNUSED(y), int UNUSED(w), int UNUSED(height)) 
                 }
             }
 
-            drawtext(k, SCALE(pos_y * 2), buf, text_length);
+            drawtext(k, SCALE(pos_y * 2), buf, buf_len);
 
             k += w;
         }
@@ -88,8 +91,8 @@ static void draw_group_settings(int x, int y, int UNUSED(width), int UNUSED(heig
     setcolor(COLOR_MAIN_TEXT);
     setfont(FONT_SELF_NAME);
 
-    drawstr(x + SCALE(10), y + MAIN_TOP + SCALE(10), GROUP_TOPIC);
-    drawstr(x + SCALE(10), y + MAIN_TOP + SCALE(70), GROUP_NOTIFICATIONS);
+    drawstr(x + SCALE(10), y + SCALE(MAIN_TOP + 10), GROUP_TOPIC);
+    drawstr(x + SCALE(10), y + SCALE(MAIN_TOP + 60), GROUP_NOTIFICATIONS);
 }
 
 static void draw_group_create(int x, int y, int UNUSED(width), int UNUSED(height)) {
@@ -205,6 +208,13 @@ static void button_group_audio_update(BUTTON *b) {
 }
 
 BUTTON button_group_audio = {
+    .panel = {
+        .type   = PANEL_BUTTON,
+        .x      = -62,
+        .y      =  10,
+        .width  = _BM_LBUTTON_WIDTH,
+        .height = _BM_LBUTTON_HEIGHT,
+    },
     .bm_fill      = BM_LBUTTON,
     .bm_icon      = BM_CALL,
     .icon_w       = _BM_LBICON_WIDTH,
@@ -321,7 +331,7 @@ static uint8_t nick_completion_search(EDIT *edit, char *found_nick, int directio
 static void nick_completion_replace(EDIT *edit, char *nick, uint32_t size) {
     char *   text      = edit->data;
     uint16_t length    = edit->length;
-    uint16_t maxlength = edit->maxlength;
+    uint16_t maxlength = edit->data_size - 1;
 
     int offset;
 
@@ -516,7 +526,7 @@ SCROLLABLE e_chat_msg_group_scroll = {
 static char e_chat_msg_group_data[65535];
 EDIT edit_chat_msg_group = {
     .multiline   = true,
-    .maxlength   = sizeof e_chat_msg_group_data - 1,
+    .data_size   = sizeof e_chat_msg_group_data,
     .data        = e_chat_msg_group_data,
     .onenter     = e_group_msg_onenter,
     .ontab       = e_chat_msg_ontab,
@@ -543,8 +553,15 @@ static void e_group_topic_onenter(EDIT *edit) {
 
 static char e_group_topic_data[1024];
 EDIT edit_group_topic = {
+    .panel = {
+        .type   = PANEL_EDIT,
+        .x      = 10,
+        .y      = 88,
+        .width  = -10,
+        .height = 24
+    },
     .data           = e_group_topic_data,
-    .maxlength      = sizeof e_group_topic_data - 1,
+    .data_size      = sizeof e_group_topic_data,
     .onenter        = e_group_topic_onenter,
     .onlosefocus    = e_group_topic_onenter,
     .noborder       = false,
@@ -565,6 +582,13 @@ static void button_chat_send_group_update(BUTTON *b) {
 }
 
 BUTTON button_chat_send_group = {
+    .panel = {
+        .type   = PANEL_BUTTON,
+        .x      =  -6 - _BM_CHAT_SEND_WIDTH,
+        .y      = -46,
+        .width  = _BM_CHAT_SEND_WIDTH,
+        .height = _BM_CHAT_SEND_HEIGHT,
+    },
     .bm_fill        = BM_CHAT_SEND,
     .bm_icon        = BM_CHAT_SEND_OVERLAY,
     .icon_w         = _BM_CHAT_SEND_OVERLAY_WIDTH,

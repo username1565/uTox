@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 bool hidden = false;
 
@@ -92,8 +93,11 @@ void init_ptt(void) {
 
 
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__DragonFly__) || defined(__FreeBSD__)
 #include <linux/input.h>
+#endif
+
+#if defined(__linux__) || defined(__DragonFly__) || defined(__FreeBSD__)
 static bool linux_check_ptt(void) {
     /* First, we try for direct access to the keyboard. */
     int ptt_key = KEY_LEFTCTRL; // TODO allow user to change this...
@@ -114,7 +118,7 @@ static bool linux_check_ptt(void) {
             return false;
         }
     }
-    /* Okay nope, lets' fallback to xinput... *pouts*
+    /* Okay nope, let's fallback to xinput... *pouts*
      * Fall back to Querying the X for the current keymap. */
     ptt_key       = XKeysymToKeycode(display, XK_Control_L);
     char keys[32] = { 0 };
@@ -146,7 +150,7 @@ bool check_ptt_key(void) {
         return true; /* If push to talk is disabled, return true. */
     }
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__DragonFly__) || defined(__FreeBSD__)
     return linux_check_ptt();
 #else
     return bsd_check_ptt();
@@ -221,6 +225,7 @@ void openurl(char *str) {
         execlp(cmd, cmd, str, (char *)0);
         exit(127);
     }
+    waitpid(-1, NULL, WNOHANG); /* reap last child */
 }
 
 void openfilesend(void) {
@@ -377,7 +382,7 @@ void formaturilist(char *out, const char *in, size_t len) {
     // out[len - removed - 1] = '\n';
 }
 
-// TODO(robinli): Go over this function and see if either len or size are removeable.
+// TODO(robinli): Go over this function and see if either len or size are removable.
 void pastedata(void *data, Atom type, size_t len, bool select) {
 
     size_t size = len;
@@ -512,7 +517,7 @@ NATIVE_IMAGE *utox_image_to_native(const UTOX_IMAGE data, size_t size, uint16_t 
 
     NATIVE_IMAGE *image = malloc(sizeof(NATIVE_IMAGE));
     if (image == NULL) {
-        LOG_ERR("utox_image_to_native", "Could mot allocate memory for image." );
+        LOG_ERR("utox_image_to_native", "Could not allocate memory for image." );
         return NULL;
     }
     image->rgb   = rgb;
@@ -571,7 +576,7 @@ void setscale(void) {
 
     if (settings.window_width > (uint32_t)SCALE(MAIN_WIDTH) &&
         settings.window_height > (uint32_t)SCALE(MAIN_HEIGHT)) {
-        /* wont get a resize event, call this manually */
+        /* won't get a resize event, call this manually */
         ui_size(settings.window_width, settings.window_height);
     }
 }
@@ -696,10 +701,16 @@ int main(int argc, char *argv[]) {
     int8_t should_launch_at_startup;
     int8_t set_show_window;
     bool   skip_updater;
+    bool allow_root;
     parse_args(argc, argv,
                &skip_updater,
                &should_launch_at_startup,
-               &set_show_window);
+               &set_show_window,
+               &allow_root);
+
+    if (getuid() == 0 && !allow_root){
+        LOG_FATAL_ERR(EXIT_FAILURE, "XLIB MAIN", "You can't run uTox as root unless --allow-root is set.");
+    }
 
     // We need to parse_args before calling utox_init()
     utox_init();
@@ -834,7 +845,7 @@ int main(int argc, char *argv[]) {
     while (!shutdown) {
         XEvent event;
         XNextEvent(display, &event);
-        if (!doevent(event)) {
+        if (!doevent(&event)) {
             break;
         }
 

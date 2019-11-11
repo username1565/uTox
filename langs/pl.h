@@ -622,6 +622,9 @@ msgstr("Pokaż")
 msgid(HIDE)
 msgstr("Ukryj")
 
+msgid(EXIT)
+msgstr("Zakończ")
+
 msgid(VIDEO_IN_NONE)
 msgstr("Brak")
 

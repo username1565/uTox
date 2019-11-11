@@ -52,7 +52,7 @@ XImage *screen_image;
 
 extern int utox_v4l_fd;
 
-/* dynamiclly load libgtk */
+/* dynamically load libgtk */
 void *libgtk;
 
 struct {
@@ -73,7 +73,7 @@ struct {
 
 Picture ximage_to_picture(XImage *img, const XRenderPictFormat *format);
 
-bool doevent(XEvent event);
+bool doevent(XEvent *event);
 
 void togglehide(void);
 

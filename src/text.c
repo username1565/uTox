@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* returns the length of the string written to `dest`
+ */
 int sprint_humanread_bytes(char *dest, unsigned int size, uint64_t bytes) {
     char * str[]  = { "B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB" };
     int    max_id = COUNTOF(str) - 1;
@@ -47,7 +49,7 @@ uint8_t utf8_len(const char *data) {
         }
         bytes++;
     }
-    // no validation, instead validate all utf8 when recieved
+    // no validation, instead validate all utf8 when received
     return bytes;
 }
 

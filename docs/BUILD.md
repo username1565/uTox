@@ -1,6 +1,6 @@
 # Build
 
-Following are barebone compilation instructions. They probably wont work but #utox on freenode can
+Following are barebone compilation instructions. They probably won't work but #utox on freenode can
 probably help you out.
 
 If you're looking for it to "just work" you're going to want [these instructions](INSTALL.md).
@@ -11,7 +11,8 @@ If you're looking for it to "just work" you're going to want [these instructions
   * [Linux](#linux)
   * [Ubuntu](#ubuntu)
   * [OpenBSD](#openbsd)
-  * [FreeBSD](#freebsd)
+  * [FreeBSD and DragonFlyBSD](#freebsd-and-dragonflybsd)
+  * [NetBSD](#netbsd)
 - [Windows](#windows)
 - [macOS](#macos)
 - [Android](#android)
@@ -55,7 +56,7 @@ For base emoji ids support you need: [base_emoji](https://github.com/irungentoo/
 
 ### Ubuntu
 
-Tested on Ubuntu 16.04
+Tested on Ubuntu 18.04
 
 ```bash
 sudo apt-get install build-essential libtool autotools-dev automake checkinstall check git yasm libopus-dev libvpx-dev pkg-config libfontconfig1-dev libdbus-1-dev libv4l-dev libxrender-dev libopenal-dev libxext-dev cmake
@@ -100,23 +101,41 @@ If you're looking for a good IDE, Netbeans is very easy to set up for uTox. In f
 
 ### OpenBSD
 
-uTox will compile on OpenBSD although not everything works.
-
-First install the [dependencies](DEPENDENCIES.md#openbsd):
+First install the [dependencies](DEPENDENCIES.md#openbsd-and-netbsd):
 
 ```bash
-sudo pkg_add -Iv opus libvpx openal
+doas pkg_add openal cmake libv4l toxcore git check
 ```
 
-You will have to compile toxcore from source:
+Optionally install D-Bus and GTK+3:
+```bash
+doas pkg_add dbus gtk+3
+```
+
+Now compile uTox:
 
 ```bash
-git clone git://github.com/TokTok/c-toxcore.git
-cd c-toxcore
-cmake .
-make
-sudo make install
-cd ..
+git clone --recursive git://github.com/uTox/uTox.git
+cd uTox/
+mkdir build
+cd build
+cmake ..
+make -j `sysctl -n hw.ncpu`
+make test
+doas make install
+```
+
+### FreeBSD and DragonFlyBSD
+
+Install the [dependencies](DEPENDENCIES.md#freebsd-and-dragonflybsd):
+
+```bash
+sudo pkg install libv4l v4l_compat openal-soft toxcore git check
+```
+
+Optionally install D-Bus, GTK+3 and filteraudio:
+```bash
+sudo pkg install dbus libfilteraudio gtk3
 ```
 
 Now compile uTox:
@@ -128,29 +147,24 @@ mkdir build
 cd build
 cmake ..
 make
+make test
 sudo make install
 ```
 
-### FreeBSD
+### NetBSD
 
-Install the [dependencies](DEPENDENCIES.md#freebsd):
-
-```bash
-sudo pkg install libv4l v4l_compat openal-soft libvpx opus
-```
-
-You will have to compile toxcore from source:
+Install the [dependencies](DEPENDENCIES.md#openbsd-and-netbsd):
 
 ```bash
-git clone git://github.com/TokTok/c-toxcore.git
-cd c-toxcore
-cmake .
-make
-sudo make install
-cd ..
+sudo pkgin install openal-soft cmake libv4l toxcore git check
 ```
+
+Optionally install D-Bus and GTK+3:
+```base
+sudo pkgin install dbus gtk3
+```
+
 Now compile uTox:
-
 ```bash
 git clone --recursive git://github.com/uTox/uTox.git
 cd uTox/
@@ -158,6 +172,7 @@ mkdir build
 cd build
 cmake ..
 make
+make test
 sudo make install
 ```
 
@@ -183,6 +198,7 @@ cd /cygdrive/c
 mkdir projects
 cd projects/
 git clone --recursive git://github.com/uTox/uTox.git
+cd uTox/
 mkdir libs
 cd libs/
 mkdir windows-x64
@@ -251,4 +267,4 @@ java -classpath $SDK_PATH/tools/lib/sdklib.jar com.android.sdklib.build.ApkBuild
 jarsigner -sigalg SHA1withRSA -digestalg SHA1 -keystore ./tmp/debug.keystore -storepass $PASSWORD ./tmp/tmp2.apk $ALIAS
 ```
 
-Come to think of it, this section is woefully out of date. The android build script in tools/ is likely to be more helpful at this point. Or come to [#utox on Freenode](https://webchat.freenode.net/?channels=#utox) and ask for grayhatter. If you're interested in working on android. He'll get you a build enviroment set up!
+Come to think of it, this section is woefully out of date. The android build script in tools/ is likely to be more helpful at this point. Or come to [#utox on Freenode](https://webchat.freenode.net/?channels=#utox) and ask for grayhatter. If you're interested in working on android. He'll get you a build environment set up!
