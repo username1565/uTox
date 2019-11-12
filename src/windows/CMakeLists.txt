@@ -1,6 +1,7 @@
 project(utoxNATIVE LANGUAGES C)
 
-option(WIN_XP_LEGACY "Compile Legacy code for Windows XP" OFF)
+#option(WIN_XP_LEGACY "Compile Legacy code for Windows XP" OFF)
+option(WIN_XP_LEGACY "Compile Legacy code for Windows XP" ON)
 if(WIN_XP_LEGACY)
     add_cflag("-D__WIN_LEGACY=1")
 endif()
