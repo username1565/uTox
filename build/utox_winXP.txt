@@ -1,0 +1,2 @@
+This file need to create empty "build"-folder using github web-interface.
+In this folder will be saved compiled files, after compilation and building uTox win32 x86 version compatible with Windows XP.
